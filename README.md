@@ -5,11 +5,8 @@
 
 ## 1) Требования
 - Python 3.10+ (рекомендовано 3.11)
-- Для локальной модели:
-  - **Вариант A (проще): Ollama** (модель запускается локально и доступна по HTTP)
-  - **Вариант B: llama.cpp server** (если вы предпочитаете GGUF напрямую)
+- Для локальной модели: Ollama** (модель запускается локально и доступна по HTTP)
 
-> Примечание по лицензии: модель YandexGPT 5 Lite 8B на Hugging Face распространяется по лицензии Yandex; для учебной/некоммерческой работы это обычно подходит — всё равно внимательно прочитайте LICENSE в репозитории модели.
 
 ## 2) Установка зависимостей
 ```bash
@@ -22,7 +19,6 @@ pip install -r requirements.txt
 
 ## 3) Запуск локальной LLM
 
-### Вариант A: Ollama
 1) Установите Ollama.
 2) Подтяните модель (пример из сообщества; название может отличаться):
 ```bash
@@ -32,13 +28,6 @@ ollama pull second_constantine/yandex-gpt-5-lite:8b
 Проверка:
 ```bash
 curl http://localhost:11434/api/tags
-```
-
-### Вариант B: llama.cpp server (GGUF)
-1) Скачайте GGUF-версию YandexGPT 5 Lite 8B Instruct.
-2) Запустите сервер llama.cpp (пример):
-```bash
-./llama-server -m ./YandexGPT-5-Lite-8B-instruct.gguf --host 0.0.0.0 --port 8001 --ctx-size 32768
 ```
 
 ## 4) Подготовка базы знаний и построение FAISS-индекса
@@ -73,13 +62,3 @@ curl -X POST http://localhost:8000/chat \
 Ответ:
 - `answer`: сгенерированный ответ
 - `sources`: список использованных фрагментов (файлы/чанки)
-
-## 7) Конфигурация через переменные окружения
-Смотрите `app/config.py`:
-- `LLM_BACKEND`: `ollama` или `openai_compat`
-- `OLLAMA_MODEL`: имя модели в Ollama
-- `OLLAMA_URL`: URL Ollama (по умолчанию http://localhost:11434)
-- `OPENAI_COMPAT_URL`: URL OpenAI-совместимого сервера (например llama.cpp /v1)
-- `INDEX_PATH`: путь к FAISS индексу
-- `CHUNKS_PATH`: путь к jsonl с чанками
-- `EMBEDDING_MODEL`: sentence-transformers модель эмбеддингов
