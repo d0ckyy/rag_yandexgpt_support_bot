@@ -62,3 +62,54 @@ curl -X POST http://localhost:8000/chat \
 Ответ:
 - `answer`: сгенерированный ответ
 - `sources`: список использованных фрагментов (файлы/чанки)
+- `manager_handoff`: `true`, если вопрос не найден в базе знаний и нужно подключить менеджера
+- `handoff_reason`: причина передачи, например `no_relevant_kb`
+- `manager_chat_id`: ID созданного чата менеджера (если был выполнен handoff)
+
+Если нужно изменить порог релевантности или текст ответа при передаче менеджеру:
+- `RAG_MIN_SCORE` — минимальная оценка совпадения (cosine similarity), ниже будет передача менеджеру
+- `MANAGER_HANDOFF_MESSAGE` — текст сообщения пользователю при передаче
+
+## 7) API менеджера и простая CRM
+
+### 7.1) Чат пользователя с менеджером
+Отправка сообщения менеджеру (создаст чат, если его ещё нет):
+```bash
+curl -X POST http://localhost:8000/manager/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "session_id":"demo",
+    "message":"Хочу связаться с менеджером",
+    "chat_id": null
+  }'
+```
+
+Получить чат и новые сообщения:
+```bash
+curl http://localhost:8000/manager/chat/{chat_id}
+```
+
+### 7.2) Простая CRM для менеджера
+Список чатов (можно `?status=open` или `?status=closed`):
+```bash
+curl http://localhost:8000/crm/chats
+```
+
+Получить детали чата:
+```bash
+curl http://localhost:8000/crm/chats/{chat_id}
+```
+
+Ответить пользователю:
+```bash
+curl -X POST http://localhost:8000/crm/chats/{chat_id}/reply \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message":"Здравствуйте! Чем могу помочь?"
+  }'
+```
+
+Закрыть чат:
+```bash
+curl -X POST http://localhost:8000/crm/chats/{chat_id}/close
+```

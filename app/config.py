@@ -17,10 +17,13 @@ class Settings(BaseSettings):
     CHUNKS_PATH: str = "data/chunks.jsonl"
     EMBEDDING_MODEL: str = "intfloat/multilingual-e5-base"
     TOP_K_DEFAULT: int = 5
+    RAG_MIN_SCORE: float = 0.75  # если ниже, считаем, что ответа в базе знаний нет
 
     # Ограничения контекста, чтобы не переполнить промпт
     MAX_CONTEXT_CHARS: int = 12000
     MAX_HISTORY_TURNS: int = 8  # сколько последних реплик хранить на сессию
+
+    MANAGER_HANDOFF_MESSAGE: str = "Извините, не нашёл ответ в базе знаний. Подключаю менеджера к чату."
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

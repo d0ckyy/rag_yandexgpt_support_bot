@@ -66,7 +66,7 @@ def load_documents(root: Path) -> List[Tuple[str, str]]:
     return docs
 
 
-def chunk_text(text: str, chunk_size: int = 900, overlap: int = 150) -> List[str]:
+def chunk_text(text: str, chunk_size: int = 700, overlap: int = 150) -> List[str]:
     if len(text) <= chunk_size:
         return [text]
 
