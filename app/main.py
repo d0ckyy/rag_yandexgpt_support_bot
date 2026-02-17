@@ -13,6 +13,8 @@ from app.rag.index import FaissStore
 from app.rag.retriever import Retriever
 from app.rag.prompt import build_messages
 
+import requests
+
 
 app = FastAPI(title="RAG Support Bot (YandexGPT local)", version="1.0.0")
 
@@ -122,6 +124,35 @@ def _append_manager_message(chat: Dict[str, Any], role: str, content: str) -> No
     chat["updated_at"] = msg["ts"]
 
 
+def _notify_manager(text: str, manager_chat_id: str | None = None) -> None:
+    token = settings.TELEGRAM_BOT_TOKEN
+    tg_chat_id = settings.TELEGRAM_MANAGER_CHAT_ID
+
+    if not token or not tg_chat_id:
+        return
+
+    payload = {
+        "chat_id": tg_chat_id,
+        "text": text,
+    }
+
+    if manager_chat_id:
+        payload["reply_markup"] = {
+            "inline_keyboard": [[
+                {"text": "➡️ Открыть чат", "callback_data": f"open:{manager_chat_id}"}
+            ]]
+        }
+
+    try:
+        requests.post(
+            f"https://api.telegram.org/bot{token}/sendMessage",
+            json=payload,
+            timeout=3,
+        )
+    except Exception as e:
+        print(f"[WARN] TG notify failed: {e}")
+
+
 @app.on_event("startup")
 def _startup() -> None:
     global store, retriever
@@ -154,8 +185,19 @@ async def chat(req: ChatRequest) -> ChatResponse:
     hits = retriever.retrieve(req.message, top_k=req.top_k)
     history = SESSIONS.get(req.session_id, [])
     if _needs_manager(hits):
-        chat = _find_open_chat_by_session(req.session_id) or _create_manager_chat(req.session_id)
+        chat = _find_open_chat_by_session(req.session_id)
+        is_new = chat is None
+        chat = chat or _create_manager_chat(req.session_id)
         _append_manager_message(chat, role="user", content=req.message)
+
+        if is_new:
+            _notify_manager(
+                "🆕 Новый чат передан менеджеру\n\n"
+                f"Chat ID: {chat['chat_id']}\n"
+                f"Сообщение:\n{req.message}",
+                manager_chat_id=chat["chat_id"],
+            )
+
         handoff_msg = settings.MANAGER_HANDOFF_MESSAGE
         history.append({"role": "user", "content": req.message})
         history.append({"role": "assistant", "content": handoff_msg})
@@ -201,6 +243,12 @@ async def manager_chat(req: ManagerChatRequest) -> ManagerChat:
         chat = _find_open_chat_by_session(req.session_id) or _create_manager_chat(req.session_id)
 
     _append_manager_message(chat, role="user", content=req.message)
+    _notify_manager(
+        "💬 Новое сообщение от пользователя\n\n"
+        f"Chat ID: {chat['chat_id']}\n"
+        f"{req.message}",
+        manager_chat_id=chat["chat_id"],
+    )
     return ManagerChat(**chat)
 
 

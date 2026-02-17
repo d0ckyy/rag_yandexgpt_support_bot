@@ -27,5 +27,8 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
+    TELEGRAM_BOT_TOKEN: str = "8181802686:AAG6mn66dzaVI55oAQs2-zQ26BvvJZnQlMo"
+    TELEGRAM_MANAGER_CHAT_ID: int = 593369557
+
 
 settings = Settings()
